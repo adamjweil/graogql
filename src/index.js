@@ -1,4 +1,5 @@
-import { GraphQLServer } from 'graphql-yoga'
+import { GraphQLServer } from 'graphql-yoga';
+import uuidv4 from 'uuid/v4';
 
 const users = [{
     id: "1",
@@ -15,7 +16,7 @@ const users = [{
     name: "Linkz",
     age: 27,
     email: "lbw@weil.com"
-}]
+}];
 
 const posts = [{
     id: "1",
@@ -64,11 +65,15 @@ const typeDefs = `
         users(query: String): [User!]!
         posts(query: String): [Post!]!
         comments: [Comment!]!
-
         comment: Comment!
         me: User!
         post: Post!
-        author: User!
+    }
+
+    type Mutation {
+        createUser(name: String!, email: String!, age: Int): User!
+        createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
+        createComment(body: String!, author: ID!, post: ID!): Comment!
     }
 
     type User {
@@ -93,7 +98,7 @@ const typeDefs = `
         id: ID!
         body: String!
         author: User!
-        posts: Post!
+        post: Post!
     }
 `
 // Resolvers
@@ -136,13 +141,73 @@ const resolvers = {
                 body: "This is my Grapgql Body",
                 published: true
             }
+        }
+    },
+
+    Mutation: {
+        createUser(parent, args, ctx, info) {
+            const emailTaken = users.some((user) => user.email === args.email)
+
+            if (emailTaken) {
+                throw new Error('Email Taken.')
+            }
+
+            const user = {
+                id: uuidv4(),
+                name: args.name,
+                email: args.email,
+                age: args.age
+            }
+
+            users.push(user)
+            return user
         },
+
+        createPost(parent, args, ctx, info) {
+            const userExists = users.some((user) => user.id === args.author)
+
+            if (!userExists) {
+                throw new Error('User not found')
+            }
+
+            const post = {
+                id: uuidv4(),
+                title: args.title,
+                body: args.body,
+                published: args.published,
+                author: args.author,
+            }
+
+            posts.push(post)
+            return post
+        },
+        createComment(parent, args, ctx, info) {
+            const userExists = users.some((user) => user.id === args.author)
+            const postExists = posts.some((posts) => post.id === args.post)
+
+            if (!userExists) {
+                throw new Error('User no exist')
+            }
+
+            if (!postExists) {
+                throw new Error('post no exist')
+            }
+
+            const comment = {
+                id: uuidv4(),
+                body: args.body,
+                author: args.author,
+                post: args.post
+            }
+            comments.push(comment)
+            return comment
+        }
     },
 
     Post: {
-        author(parent,args,ctx,info) {
+        author(parent, args, ctx, info) {
             return users.find((user) => {
-                return user.id === parent.id
+                return user.id === parent.author
             })
         },
         comments(parent, args, ctx, info) {
@@ -158,7 +223,7 @@ const resolvers = {
                 return user.id === parent.author
             })
         },
-        posts(parent, args, ctx, info) {
+        post(parent, args, ctx, info) {
             return posts.find((post) => {
                 return post.id === parent.post
             })
@@ -173,7 +238,7 @@ const resolvers = {
         },
         comments(parent, args, ctx, info) {
             return comments.filter((comment) => {
-                return comment.author === user.id
+                return comment.author === parent.id
             })
         }
     }
