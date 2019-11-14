@@ -6,6 +6,7 @@ import Comment from './resolvers/Comment'
 import User from './resolvers/User'
 import db from './resolvers/db';
 
+
 const server = new GraphQLServer({
     typeDefs: './src/schema.graphql',
     resolvers: {
@@ -17,6 +18,7 @@ const server = new GraphQLServer({
     },
     context: {
         db
+
     }
 })
 
