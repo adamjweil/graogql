@@ -18,6 +18,12 @@
         updateComment(id: ID!, data: UpdateCommentInput!): Comment!
     }
 
+    type Subscription {
+        comment(postId: ID!): CommentSubscriptionPayload!
+        comments: CommentsSubscriptionPayload!
+        post: PostSubscriptionPayload!
+    }
+
     input CreateUserInput {
         name: String!
         email: String!
@@ -42,7 +48,6 @@
         author: ID!
         post: ID!
     }
-
 
     input UpdateCommentInput {
         body: String
@@ -77,4 +82,19 @@
         body: String!
         author: User!
         post: Post!
+    }
+
+    type PostSubscriptionPayload {
+        mutation: String!
+        data: Post!
+    }
+
+    type CommentSubscriptionPayload {
+        mutation: String!
+        data: Comment!
+    }
+
+    type CommentsSubscriptionPayload {
+        mutation: String!
+        data: Comment!
     }
