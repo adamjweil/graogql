@@ -7,9 +7,11 @@ const Subscription = {
 				throw new Error('Cannot find Post')
 			}
 
-			return pubsub.asyncIterator(`comment ${postId}`)
-		}
-	},
+			
+		
+		return pubsub.asyncIterator(`comment ${postId}`)
+	}
+},
 	post: {
 		subscribe(parent, args, { pubsub }, info) {
 			return pubsub.asyncIterator('post')
