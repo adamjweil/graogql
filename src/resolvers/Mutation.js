@@ -1,5 +1,10 @@
 import uuidv4 from 'uuid/v4';
 
+// Enum
+// 1. A special type that defines a set of constants 
+// 2. This type can be used as the type for a field (similar to scaler and custom object types)
+// 3. Values for the field must be one of the constants for the type 
+
 const Mutation = {
     createUser(parent, args, { db }, info) {
         const emailTaken = db.users.some((user) => user.email === args.email)
@@ -142,7 +147,7 @@ const Mutation = {
     },
     createComment(parent, args, { db, pubsub }, info) {
         const userExists = db.users.some((user) => user.id === args.data.author)
-        const postExists = db.posts.some((post) => post.id === args.data.post)
+        const postExists = db.posts.some((post) => post.id === args.data.post && post.published)
 
         if (!userExists || !postExists) {
             throw new Error('Unable to find User and Post')
@@ -152,10 +157,13 @@ const Mutation = {
             id: uuidv4(),
             ...args.data
         }
+
         db.comments.push(comment)
         pubsub.publish(`comment ${args.data.post}`, { 
-            mutation: 'CREATED',
-            data: comment
+            comment: {
+                mutation: 'CREATED',
+                data: comment
+            }
          })
         return comment
     },
