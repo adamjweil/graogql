@@ -1,42 +1,43 @@
 const Query = {
-    comments(parent, args, { db }, info) {
-        return db.comments
-    },
-    users(parent, args, { db }, info) {
-        if (!args.query) {
-            return db.users
-        }
-        return users.filter((user) => {
-            return user.name.toLowerCase().includes(args.query.toLowerCase())
-        })
-    },
-    posts(parent, args, { db }, info) {
-        if (!args.query) {
-            return db.posts 
-        }
 
-        return db.posts.filter((post) => {
-            const titleMatch = args.title.toLowerCase().includes(args.query.toLowerCase())
-            const bodyMatch = args.body.toLowerCase().includes(args.query.toLowerCase())
-            return titleMatch || bodyMatch
-        })
+    users(parent, args, { prisma }, info) {
+        let opArgs = {}
+
+        if (args.query) {
+            opArgs.where = {
+                OR: [{
+                    name_contains: args.query
+                }, {
+                    email_contains: args.query
+                }]
+            }
+        }
+        return prisma.query.users(opArgs, info) 
+    },
+    posts(parent, args, { prisma }, info) {
+        let opArgs = {}
+        if (args.query) {
+            opArgs.where = {
+                OR: [{
+                    title_contains: args.query
+                }, {
+                    body_contains: args.query
+                }]
+            }
+        }
+        return prisma.query.posts(opArgs, info)
+    },
+    comments(parent, args, { prisma }, info) {
+        return prisma.query.comments(null, info)
     },
     me() {
         return {
             id: '123abc',
-            name: 'Adam',
+            usernamename: 'Adam',
             email: 'Adam@gmail.com',
-            age: 30
+            
         }
     },
-    post() {
-        return {
-            id: '987sbhj',
-            title: "GraphQL Title",
-            body: "This is my Grapgql Body",
-            published: true
-        }
-    }
 }
 
 export { Query as default }

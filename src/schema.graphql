@@ -27,7 +27,6 @@
     input CreateUserInput {
         name: String!
         email: String!
-        age: Int
     }
 
     input CreatePostInput {
@@ -44,26 +43,24 @@
     }
 
     input CreateCommentInput {
-        body: String!
+        text: String!
         author: ID!
         post: ID!
     }
 
     input UpdateCommentInput {
-        body: String
+        text: String
     }
 
     input UpdateUserInput {
         name: String
         email: String
-        age: Int
     }
 
     type User {
         id: ID!
         name: String!
         email: String!
-        age: Int
         posts: [Post!]!
         comments: [Comment!]!
     }
@@ -79,7 +76,7 @@
 
     type Comment {
         id: ID!
-        body: String!
+        text: String!
         author: User!
         post: Post!
     }
