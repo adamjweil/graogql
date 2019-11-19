@@ -1,11 +1,14 @@
 import { Prisma } from 'prisma-binding'
+import { fragmentReplacements } from './resolvers/index';
 
 const prisma = new Prisma({
 	typeDefs: 'src/generated/prisma.graphql',
 	endpoint: 'http://localhost:4466',
-	secret: 'thisistestsecret'
+	secret: 'thisistestsecret',
+	fragmentReplacements
 })
 
+export { prisma as default }
 // prisma.query prisma.mutation prisma.subscription prisma.exists 
 
 // const createPostForUser = async (authorId, data) => {
@@ -75,4 +78,3 @@ const prisma = new Prisma({
 // 	console.log(data)
 // })
 
-export { prisma as default }

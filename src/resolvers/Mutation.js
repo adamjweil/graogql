@@ -102,8 +102,18 @@ const Mutation = {
                 id: userId
             }
         }) 
+
+        const isPublished = await prisma.exists.Post({ id: args.id, published: true })
+        if (!isPublished) {
+            throw new Error('Unale to update post')
+        }
+
         if (!postBelongsToUser) {
             throw new Error('Post does not belong to you')
+        }
+
+        if (isPublished && args.data.published === false) {
+            await prisma.mutation.deleteManyComments({ where: { post: { id: args.id } } })
         }
         return prisma.mutation.updatePost({ 
             where: {
@@ -112,8 +122,15 @@ const Mutation = {
             data: args.data
         }, info)
     },
-    createComment(parent, args, { prisma, request }, info) {
+    async createComment(parent, args, { prisma, request }, info) {
         const userId = getUserId(request)
+        const postExists = await prisma.exists.Post({
+                id: args.data.post,
+                published: true
+        })
+
+        if (!postExists) { throw new Error('No post')}
+
         return prisma.mutation.createComment({ 
             data: {
                 text: args.data.text,
