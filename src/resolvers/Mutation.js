@@ -1,5 +1,6 @@
-import uuidv4 from 'uuid/v4';
-
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import getUserId from '../utils/getUserId';
 // Enum
 // 1. A special type that defines a set of constants 
 // 2. This type can be used as the type for a field (similar to scaler and custom object types)
@@ -7,16 +8,43 @@ import uuidv4 from 'uuid/v4';
 
 const Mutation = {
     async createUser(parent, args, { prisma }, info) {
-        const emailTaken = await prisma.exists.User({ email: args.data.email })
-        
-        if (emailTaken) { throw new Error('Email Taken')}
-       
-        return prisma.mutation.createUser({ data: args.data }, info)
+        if (args.data.password.length < 8) {
+            throw new Error('Passwords must be 8 characters long.')
+        }
+        const password = await bcrypt.hash(args.data.password, 10) 
+        const user = await prisma.mutation.createUser({ 
+            data: {
+                ...args.data,
+                password
+            }
+        })
+        return {
+            user,
+            token: jwt.sign({ userId: user.id }, 'thisisasecret')
+        }
+    },
+    async login(parent, args, { prisma }, info) {
+        const user = await prisma.query.user({
+            where: {
+                email: args.data.email
+                }
+            })
+
+        if (!user) {
+            throw new Error('Cannot Find User')
+        }
+
+        const isMatch = bcrypt.compare(args.data.password, user.password)
+
+        if (!isMatch) {
+            throw new Error('Unable to login')
+        }
+        return {
+            user,
+            token: jwt.sign({ userId: user.id }, 'thisisasecret')
+        }
     },
     async deleteUser(parent, args, { prisma }, info) {
-        const userExists = await prisma.exists.User({ id: args.id})
-        if (!userExists) { throw new Error('No User with that ID')}
-
         return prisma.mutation.deleteUser({ 
             where: {
                 id: args.id
@@ -31,7 +59,9 @@ const Mutation = {
             data: args.data
         }, info)
     },
-    createPost(parent, args, { prisma, pubsub }, info) {
+    createPost(parent, args, { prisma, request }, info) {
+        const userId = getUserId(request)
+
         return prisma.mutation.createPost({ 
             data: {
                 title: args.data.title,
@@ -39,7 +69,7 @@ const Mutation = {
                 published: args.data.published,
                 author: {
                     connect: {
-                        id: args.data.author
+                        id: userId
                     }
                 }
             }
